@@ -3,10 +3,12 @@ package com.hs18.vaadin.addon;
 import com.hs18.vaadin.addon.graph.GraphJSComponent;
 import com.hs18.vaadin.addon.graph.listener.GraphJsLeftClickListener;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.ui.Button;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Button.ClickEvent;
 
 /**
  * The Application's "main" class
@@ -15,6 +17,9 @@ import com.vaadin.ui.VerticalLayout;
 public class MyVaadinUI extends UI
 {
 	GraphJSComponent graphJSComponent;
+	static int increment = 0;
+	static String selectedNode = new String();
+	
     @Override
     protected void init(VaadinRequest request) {
     	
@@ -28,6 +33,8 @@ public class MyVaadinUI extends UI
 			
 			@Override
 			public void onLeftClick(String id, String type, String parentId) {
+				selectedNode = id;
+				
 				System.out.println(id + " "+ type + " "+ parentId);
 				Notification.show("Clicked on node with id = " + id + " at " + type, Notification.Type.WARNING_MESSAGE); 
 			}
@@ -39,6 +46,27 @@ public class MyVaadinUI extends UI
         
         layout.addComponent(graphLabel);
         layout.addComponent(graphJSComponent);
+        
+        Button button = new Button("Add new node");
+        button.addClickListener(new Button.ClickListener() {
+			@Override
+			public void buttonClick(ClickEvent event) {
+				try {
+					if (selectedNode != null || !selectedNode.equals("")) {
+						increment++;
+						
+						graphJSComponent.addNode("New node " + increment, "New node " + increment, "level 1", null, selectedNode);
+						graphJSComponent.refresh();
+						selectedNode = "New node " + increment;
+						Notification.show("Created new node with id = " + selectedNode); 
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}//Give parent id as null for root node
+			}
+		});
+        
+        layout.addComponent(button);
         prepareGraph();
     }
 

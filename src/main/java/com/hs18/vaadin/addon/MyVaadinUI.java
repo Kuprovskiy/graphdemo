@@ -1,9 +1,12 @@
 package com.hs18.vaadin.addon;
  
+import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.hs18.vaadin.addon.graph.GraphJSComponent;
 import com.hs18.vaadin.addon.graph.listener.GraphJsLeftClickListener;
+import com.vaadin.server.Sizeable;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.HorizontalSplitPanel;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
@@ -25,7 +28,7 @@ public class MyVaadinUI extends UI
     	
         final VerticalLayout layout = new VerticalLayout();
         layout.setMargin(true);
-        setContent(layout);
+        //setContent(layout);
         
     	graphJSComponent = new GraphJSComponent();
     	graphJSComponent.setNodesSize(120, 50);
@@ -51,22 +54,34 @@ public class MyVaadinUI extends UI
         button.addClickListener(new Button.ClickListener() {
 			@Override
 			public void buttonClick(ClickEvent event) {
-				try {
-					if (selectedNode != null || !selectedNode.equals("")) {
-						increment++;
-						
+				if (!selectedNode.equals("") && !selectedNode.equals(null)) {
+					increment++;
+					
+					try {
 						graphJSComponent.addNode("New node " + increment, "New node " + increment, "level 1", null, selectedNode);
 						graphJSComponent.refresh();
 						selectedNode = "New node " + increment;
+						
 						Notification.show("Created new node with id = " + selectedNode); 
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}//Give parent id as null for root node
+				} else {
+					Notification.show("Please select a node!");
+				}
 			}
 		});
         
-        layout.addComponent(button);
+        //layout.addComponent(button);
+        
+        HorizontalSplitPanel hsplit = new HorizontalSplitPanel();
+        hsplit.setFirstComponent(button);
+        hsplit.setSecondComponent(layout);
+        hsplit.setSplitPosition(200, Sizeable.UNITS_PIXELS);
+        hsplit.setLocked(true);
+
+        setContent(hsplit);
+        
         prepareGraph();
     }
 

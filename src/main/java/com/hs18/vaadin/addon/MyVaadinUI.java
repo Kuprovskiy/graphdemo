@@ -3,15 +3,23 @@ package com.hs18.vaadin.addon;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.hs18.vaadin.addon.graph.GraphJSComponent;
 import com.hs18.vaadin.addon.graph.listener.GraphJsLeftClickListener;
+import com.vaadin.data.fieldgroup.FieldGroup;
+import com.vaadin.event.ItemClickEvent;
 import com.vaadin.server.Sizeable;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.Button.ClickListener;
+import com.vaadin.ui.FormLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.HorizontalSplitPanel;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
+import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.Window;
 
 /**
  * The Application's "main" class
@@ -39,9 +47,15 @@ public class MyVaadinUI extends UI
 				selectedNode = id;
 				
 				System.out.println(id + " "+ type + " "+ parentId);
-				Notification.show("Clicked on node with id = " + id + " at " + type, Notification.Type.WARNING_MESSAGE); 
+				//Notification.show("Clicked on node with id = " + id + " at " + type, Notification.Type.WARNING_MESSAGE);
+				MySub sub = new MySub(id, type, parentId);
+				// Set window size.
+				sub.setHeight("210px");
+				sub.setWidth("300px");
+				UI.getCurrent().addWindow(sub);
 			}
 		});
+		
         graphJSComponent.setImmediate(true);
         
         String lhtml = "<div id='graph' class='graph' ></div>";//add style='overflow:scroll' if required
@@ -85,6 +99,100 @@ public class MyVaadinUI extends UI
         prepareGraph();
     }
 
+    // Define a sub-window by inheritance
+    class MySub extends Window {
+    	private static final String ID = "ID";
+    	private static final String TYPE = "Type";
+    	private final String[] fieldNames = new String[] { ID, TYPE };
+    	private FormLayout editorLayout = new FormLayout();
+    	String title = new String();
+    	
+    	public MySub(final String id, String type, String parentId) {
+            super(id); // Set window caption
+            center();
+
+            // Some basic content for the window
+            VerticalLayout content = new VerticalLayout();
+            //content.addComponent(new Label(type));
+            content.setMargin(true);
+            content.addComponent(editorLayout);
+            setContent(content);
+            
+        	final TextField field1 = new TextField(ID);
+        	editorLayout.addComponent(field1);
+            field1.setWidth("100%");
+            field1.setEnabled(false);
+            field1.setValue(id);
+            
+            try {
+				title = graphJSComponent.getNodeProperties(id).get("title");
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+            
+            if (title == null) {
+            	title = "";
+            }
+            
+            final TextField field2 = new TextField(TYPE);
+        	editorLayout.addComponent(field2);
+        	field2.setWidth("100%");
+        	field2.setValue(title);
+        	field2.focus();
+            
+            // Disable the close button
+            //setClosable(false);
+
+        	HorizontalLayout hrLayout = new HorizontalLayout();
+        	content.addComponent(hrLayout);
+        	hrLayout.setWidth("100%");
+        	
+            // Trivial logic for closing the sub-window
+            Button ok = new Button("OK");
+            ok.addClickListener(new ClickListener() {
+                public void buttonClick(ClickEvent event) {
+                	try {
+						graphJSComponent.getNodeProperties(id).put("title", field2.getValue());
+						//graphJSComponent.refresh();//Call refresh after you are done with your changes
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						close(); // Close the sub-window						
+					}
+                }
+            });
+            hrLayout.addComponent(ok);
+            
+            Button clear = new Button("Clear");
+            clear.addClickListener(new ClickListener() {
+                public void buttonClick(ClickEvent event) {
+                	try {
+						graphJSComponent.getNodeProperties(id).clear();
+						graphJSComponent.refresh();
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						close(); // Close the sub-window
+					}
+					
+                }
+            });
+            hrLayout.addComponent(clear);
+            
+            Button remove = new Button("Delete");
+            remove.addClickListener(new ClickListener() {
+                public void buttonClick(ClickEvent event) {
+                	Notification.show("Not implemented yet");
+					close(); // Close the sub-window
+                }
+            });
+            hrLayout.addComponent(remove);
+            
+            hrLayout.setComponentAlignment(clear, Alignment.MIDDLE_CENTER);
+            hrLayout.setComponentAlignment(remove, Alignment.MIDDLE_RIGHT);
+        }
+    }
+    
 	private void prepareGraph(){
 		try {
 			graphJSComponent.addNode("fruits", "Fruits I Like", "level 1", null, null);//Give parent id as null for root node
